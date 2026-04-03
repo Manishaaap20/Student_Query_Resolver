@@ -1,10 +1,12 @@
 export interface Grievance {
   id: string;
+  _id?: string;
   studentEmail: string;
   studentName: string;
   content: string;
   department: string;
-  concernedStaffEmail: string;
+  concernedStaffEmail?: string;
+  staffId?: string;
   status: "Not Solved" | "In Progress" | "Solved";
   upvotes: number;
   createdAt: string;

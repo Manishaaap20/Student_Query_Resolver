@@ -45,7 +45,7 @@ const GrievanceCard = ({ grievance, showActions = true, onUpvote, onDelete, onSt
         <p><span className="font-semibold">Student Email:</span> {grievance.studentEmail}</p>
         <p><span className="font-semibold">Content:</span> {grievance.content}</p>
         <p><span className="font-semibold">Department:</span> {grievance.department}</p>
-        <p><span className="font-semibold">Concerned Staff Email:</span> {grievance.concernedStaffEmail}</p>
+        <p><span className="font-semibold">Concerned Staff Email:</span> {grievance.staffId || grievance.concernedStaffEmail}</p>
       </div>
 
       {showActions && (

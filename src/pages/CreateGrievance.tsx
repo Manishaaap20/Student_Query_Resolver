@@ -1,22 +1,38 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { departments } from "@/lib/mockData";
 import { toast } from "sonner";
+import api from "@/lib/api";
+
+const departments = ["IT", "CSE", "ECE", "EEE", "Mech", "Civil", "Admin", "Finance"];
 
 const CreateGrievance = () => {
   const navigate = useNavigate();
   const [department, setDepartment] = useState("");
-  const [staffEmail, setStaffEmail] = useState("");
+  const [staffId, setStaffId] = useState("");
   const [content, setContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!department || !content) {
       toast.error("Please fill in all required fields.");
       return;
     }
-    toast.success("Grievance created successfully!");
-    navigate("/my-grievances");
+
+    setIsSubmitting(true);
+    try {
+      await api.post('/grievances', {
+        department,
+        staffId,
+        content
+      });
+      toast.success("Grievance created successfully!");
+      navigate("/my-grievances");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to create grievance");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -37,10 +53,10 @@ const CreateGrievance = () => {
           </select>
           <input
             type="email"
-            placeholder="Concerned Staff Email"
-            value={staffEmail}
-            onChange={(e) => setStaffEmail(e.target.value)}
-            className="rounded border border-input bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="Staff Mail ID / Staff ID"
+            value={staffId}
+            onChange={(e) => setStaffId(e.target.value)}
+            className="flex-1 rounded border border-input bg-card px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
@@ -54,9 +70,10 @@ const CreateGrievance = () => {
 
         <button
           type="submit"
-          className="rounded bg-accent px-6 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90"
+          disabled={isSubmitting}
+          className="rounded bg-accent px-6 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          Create Grievance
+          {isSubmitting ? "Submitting..." : "Create Grievance"}
         </button>
       </form>
     </div>

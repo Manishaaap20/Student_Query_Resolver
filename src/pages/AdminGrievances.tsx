@@ -1,11 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GrievanceCard from "@/components/GrievanceCard";
-import { mockGrievances, departments, type Grievance } from "@/lib/mockData";
+import api from "@/lib/api";
+import { useToast } from "@/components/ui/use-toast";
+
+const departments = ["IT", "CSE", "ECE", "EEE", "Mech", "Civil", "Admin", "Finance"];
 
 const AdminGrievances = () => {
-  const [grievances, setGrievances] = useState<Grievance[]>(mockGrievances);
+  const [grievances, setGrievances] = useState<any[]>([]);
   const [filterDept, setFilterDept] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchGrievances();
+  }, []);
+
+  const fetchGrievances = async () => {
+    try {
+      const { data } = await api.get('/grievances');
+      setGrievances(data);
+    } catch (error) {
+      toast({ title: "Failed to fetch grievances", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = grievances.filter((g) => {
     if (filterDept && g.department !== filterDept) return false;
@@ -13,14 +33,21 @@ const AdminGrievances = () => {
     return true;
   });
 
-  const handleStatusChange = (id: string, status: Grievance["status"]) => {
-    setGrievances((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, status } : g))
-    );
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      const { data } = await api.put(`/grievances/${id}/status`, { status });
+      setGrievances((prev) =>
+        prev.map((g) => (g._id === id ? { ...g, status: data.status } : g))
+      );
+      toast({ title: "Status updated successfully" });
+    } catch (error: any) {
+      toast({ title: "Failed to update status", description: error.response?.data?.message || "Error", variant: "destructive" });
+    }
   };
 
   const handleDelete = (id: string) => {
-    setGrievances((prev) => prev.filter((g) => g.id !== id));
+    // Only simulated for now, no backend delete route implemented.
+    setGrievances((prev) => prev.filter((g) => g._id !== id));
   };
 
   return (
@@ -51,13 +78,16 @@ const AdminGrievances = () => {
       </div>
 
       <div className="mt-6 space-y-5">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <p className="text-center text-muted-foreground">Loading grievances...</p>
+        ) : filtered.length === 0 ? (
           <p className="text-center text-muted-foreground">No grievances match the filters.</p>
         ) : (
           filtered.map((g) => (
             <GrievanceCard
-              key={g.id}
-              grievance={g}
+              key={g._id}
+              grievance={{...g, id: g._id}}  
+              // Remapping _id to id to avoid extensive GrievanceCard refactor
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
             />
